@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+  <a href="{{ url_for('index') }}" class="btn btn-link">&larr; Back</a>
+  <div class="card mb-3">
+    <div class="row g-0">
+      <div class="col-md-4">
+        {% if item.image_path %}
+          <img src="{{ '/' + item.image_path }}" class="img-fluid rounded-start">
+        {% else %}
+          <div class="bg-secondary text-white p-5">No image</div>
+        {% endif %}
+      </div>
+      <div class="col-md-8">
+        <div class="card-body">
+          <h3 class="card-title">{{ item.title }}</h3>
+          <p class="card-text">{{ item.description }}</p>
+          <p class="card-text"><small class="text-muted">{{ item.status }} • {{ item.location }}</small></p>
+          <p class="card-text">Reporter: {{ item.reporter_name or 'Anonymous' }} {% if item.email %} • {{ item.email }} {% endif %}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
