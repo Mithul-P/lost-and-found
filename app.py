@@ -1,84 +1,100 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import mysql.connector
-from mysql.connector import Error
-from PIL import Image
-import os
 from dotenv import load_dotenv
+import os
 
+# Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey"
+app.secret_key = "supersecretkey"  # Change this for production
 
-# Configure MySQL connection
-db_config = {
-    "host": os.getenv("DB_HOST", "localhost"),
-    "user": os.getenv("DB_USER", "root"),
-    "password": os.getenv("DB_PASSWORD", ""),
-    "database": os.getenv("DB_NAME", "lost_and_found"),
-}
-
+# MySQL Database connection
 def get_db_connection():
-    try:
-        connection = mysql.connector.connect(**db_config)
-        return connection
-    except Error as e:
-        print(f"Database connection error: {e}")
-        return None
+    return mysql.connector.connect(
+        host=os.getenv("DB_HOST", "localhost"),
+        user=os.getenv("DB_USER", "root"),
+        password=os.getenv("DB_PASSWORD", ""),
+        database=os.getenv("DB_NAME", "lostandfound")
+    )
+
+# ---------------------------
+# ROUTES
+# ---------------------------
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
+
 @app.route('/add', methods=['GET', 'POST'])
 def add_item():
     if request.method == 'POST':
-        name = request.form['name']
+        item_name = request.form['item_name']
         description = request.form['description']
-        category = request.form['category']
+        location = request.form['location']
         contact = request.form['contact']
 
-        connection = get_db_connection()
-        if connection:
-            cursor = connection.cursor()
+        try:
+            db = get_db_connection()
+            cursor = db.cursor()
             cursor.execute(
-                "INSERT INTO items (name, description, category, contact) VALUES (%s, %s, %s, %s)",
-                (name, description, category, contact),
+                "INSERT INTO items (item_name, description, location, contact) VALUES (%s, %s, %s, %s)",
+                (item_name, description, location, contact)
             )
-            connection.commit()
+            db.commit()
             cursor.close()
-            connection.close()
+            db.close()
             flash("Item added successfully!", "success")
-            return redirect(url_for('show_items'))
-        else:
-            flash("Database connection failed.", "danger")
+        except Exception as e:
+            flash(f"Database error: {e}", "danger")
+
+        return redirect(url_for('show_items'))
     return render_template('add_item.html')
+
 
 @app.route('/items')
 def show_items():
-    connection = get_db_connection()
-    items = []
-    if connection:
-        cursor = connection.cursor(dictionary=True)
+    try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
         cursor.execute("SELECT * FROM items ORDER BY id DESC")
         items = cursor.fetchall()
         cursor.close()
-        connection.close()
-    return render_template('show_items.html', items=items)
+        db.close()
+        return render_template('items.html', items=items)
+    except Exception as e:
+        flash(f"Database connection failed: {e}", "danger")
+        return render_template('items.html', items=[])
+
 
 @app.route('/search', methods=['GET', 'POST'])
 def search():
-    query = request.args.get('q', '')
     results = []
-    if query:
-        connection = get_db_connection()
-        if connection:
-            cursor = connection.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM items WHERE name LIKE %s OR description LIKE %s", (f"%{query}%", f"%{query}%"))
+    if request.method == 'POST':
+        keyword = request.form['keyword']
+        try:
+            db = get_db_connection()
+            cursor = db.cursor(dictionary=True)
+            cursor.execute(
+                "SELECT * FROM items WHERE item_name LIKE %s OR description LIKE %s",
+                (f"%{keyword}%", f"%{keyword}%")
+            )
             results = cursor.fetchall()
             cursor.close()
-            connection.close()
-    return render_template('search.html', results=results, query=query)
+            db.close()
+        except Exception as e:
+            flash(f"Search error: {e}", "danger")
+    return render_template('search.html', results=results)
 
-if __name__ == "__main__":
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template('404.html'), 404
+
+
+# ---------------------------
+# ENTRY POINT
+# ---------------------------
+if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
