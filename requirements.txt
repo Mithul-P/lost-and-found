@@ -4,4 +4,4 @@ python-dotenv==1.0.0
 Werkzeug==3.0.0
 Pillow==10.0.0
 fuzzywuzzy[speedup]==0.19.1
-gunicorn
+gunicorn==20.1.0
