@@ -1,66 +1,84 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import mysql.connector
 from mysql.connector import Error
+from PIL import Image
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = "your_secret_key_here"  # Change this to any random string
+app.secret_key = "supersecretkey"
 
-# ---------- DATABASE CONNECTION ----------
+# Configure MySQL connection
+db_config = {
+    "host": os.getenv("DB_HOST", "localhost"),
+    "user": os.getenv("DB_USER", "root"),
+    "password": os.getenv("DB_PASSWORD", ""),
+    "database": os.getenv("DB_NAME", "lost_and_found"),
+}
+
 def get_db_connection():
     try:
-        conn = mysql.connector.connect(
-            host=os.getenv("DB_HOST"),
-            user=os.getenv("DB_USER"),
-            password=os.getenv("DB_PASSWORD"),
-            database=os.getenv("DB_NAME"),
-            port=int(os.getenv("DB_PORT", 3306))
-        )
-        return conn
+        connection = mysql.connector.connect(**db_config)
+        return connection
     except Error as e:
-        print(f"Database connection failed: {e}")
+        print(f"Database connection error: {e}")
         return None
 
-
-# ---------- ROUTES ----------
 @app.route('/')
 def index():
     return render_template('index.html')
 
-
-@app.route('/add_item', methods=['POST'])
+@app.route('/add', methods=['GET', 'POST'])
 def add_item():
-    name = request.form['name']
-    description = request.form['description']
+    if request.method == 'POST':
+        name = request.form['name']
+        description = request.form['description']
+        category = request.form['category']
+        contact = request.form['contact']
 
-    conn = get_db_connection()
-    if conn:
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO items (name, description) VALUES (%s, %s)", (name, description))
-        conn.commit()
-        cursor.close()
-        conn.close()
-        flash("Item added successfully!", "success")
-    else:
-        flash("Database connection failed.", "error")
-
-    return redirect(url_for('index'))
-
+        connection = get_db_connection()
+        if connection:
+            cursor = connection.cursor()
+            cursor.execute(
+                "INSERT INTO items (name, description, category, contact) VALUES (%s, %s, %s, %s)",
+                (name, description, category, contact),
+            )
+            connection.commit()
+            cursor.close()
+            connection.close()
+            flash("Item added successfully!", "success")
+            return redirect(url_for('show_items'))
+        else:
+            flash("Database connection failed.", "danger")
+    return render_template('add_item.html')
 
 @app.route('/items')
 def show_items():
-    conn = get_db_connection()
+    connection = get_db_connection()
     items = []
-    if conn:
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM items")
+    if connection:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM items ORDER BY id DESC")
         items = cursor.fetchall()
         cursor.close()
-        conn.close()
-    return render_template('items.html', items=items)
+        connection.close()
+    return render_template('show_items.html', items=items)
 
+@app.route('/search', methods=['GET', 'POST'])
+def search():
+    query = request.args.get('q', '')
+    results = []
+    if query:
+        connection = get_db_connection()
+        if connection:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM items WHERE name LIKE %s OR description LIKE %s", (f"%{query}%", f"%{query}%"))
+            results = cursor.fetchall()
+            cursor.close()
+            connection.close()
+    return render_template('search.html', results=results, query=query)
 
-# ---------- RENDER ENTRY POINT ----------
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=10000)
