@@ -1,27 +1,11 @@
 {% extends "base.html" %}
+
 {% block content %}
+<div class="text-center">
+    <h1 class="mt-5">Welcome to the Lost & Found Portal</h1>
+    <p class="lead">Report lost items or search for found ones easily.</p>
 
-<div class="container mt-5 text-center">
-    <h1 class="mb-4">Lost & Found Portal</h1>
-    <p class="lead">Easily report or find lost items in your campus or community.</p>
-
-    <div class="mt-4">
-        <!-- ✅ Fixed: use correct Flask endpoint names -->
-        <a href="{{ url_for('add_item') }}" class="btn btn-primary">Report an item</a>
-        <a href="{{ url_for('show_items') }}" class="btn btn-success btn-lg m-2">View All Items</a>
-        <a href="{{ url_for('search') }}" class="btn btn-info btn-lg m-2">Search Lost Items</a>
-    </div>
-
-    <div class="mt-5">
-        <img src="{{ url_for('static', filename='images/lostfound.png') }}"
-             alt="Lost and Found"
-             class="img-fluid rounded shadow"
-             style="max-width: 400px;">
-    </div>
-
-    <footer class="mt-5 text-muted">
-        <p>Developed by <strong>Mithul</strong> | Powered by Flask</p>
-    </footer>
+    <a href="{{ url_for('add_item') }}" class="btn btn-primary btn-lg m-2">Report an Item</a>
+    <a href="{{ url_for('list_items') }}" class="btn btn-success btn-lg m-2">View All Items</a>
 </div>
-
 {% endblock %}
