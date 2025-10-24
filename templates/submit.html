@@ -1,48 +1,26 @@
 {% extends "base.html" %}
+
 {% block content %}
-  <h2>Report Lost / Found Item</h2>
-  <form method="post" enctype="multipart/form-data" class="row g-3 mt-2">
-    <div class="col-md-6">
-      <label class="form-label">Title</label>
-      <input name="title" class="form-control" required>
+<div class="container mt-5">
+  <h2 class="text-center mb-4">Report a Lost or Found Item</h2>
+  <form method="POST" action="{{ url_for('add_item') }}">
+    <div class="form-group mb-3">
+      <label for="name">Item Name</label>
+      <input type="text" class="form-control" name="name" id="name" required>
     </div>
-    <div class="col-md-6">
-      <label class="form-label">Status</label>
-      <select name="status" class="form-select">
-        <option value="lost">Lost</option>
-        <option value="found">Found</option>
-      </select>
+    <div class="form-group mb-3">
+      <label for="description">Description</label>
+      <textarea class="form-control" name="description" id="description" rows="3" required></textarea>
     </div>
-    <div class="col-12">
-      <label class="form-label">Description</label>
-      <textarea name="description" class="form-control" rows="3"></textarea>
+    <div class="form-group mb-3">
+      <label for="location">Location Found/Lost</label>
+      <input type="text" class="form-control" name="location" id="location" required>
     </div>
-    <div class="col-md-6">
-      <label class="form-label">Location</label>
-      <input name="location" class="form-control">
+    <div class="form-group mb-3">
+      <label for="contact">Contact Information</label>
+      <input type="text" class="form-control" name="contact" id="contact" required>
     </div>
-    <div class="col-md-6">
-      <label class="form-label">Event date</label>
-      <input type="date" name="event_date" class="form-control">
-    </div>
-    <div class="col-md-6">
-      <label class="form-label">Your name</label>
-      <input name="name" class="form-control">
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">Email</label>
-      <input name="email" class="form-control" type="email">
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">Phone</label>
-      <input name="phone" class="form-control">
-    </div>
-    <div class="col-md-6">
-      <label class="form-label">Image</label>
-      <input name="image" type="file" class="form-control">
-    </div>
-    <div class="col-12">
-      <button class="btn btn-primary">Submit</button>
-    </div>
+    <button type="submit" class="btn btn-primary mt-2">Submit</button>
   </form>
+</div>
 {% endblock %}
