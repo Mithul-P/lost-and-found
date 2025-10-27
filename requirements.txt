@@ -5,3 +5,5 @@ Werkzeug==3.0.0
 Pillow==11.0.0
 fuzzywuzzy==0.18.0
 gunicorn==20.1.0
+ImageHash==4.3.1
+
