@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>All Reported Items</h2>
+<div class="row">
+  {% for item in items %}
+  <div class="col-md-4 mt-3">
+    <div class="card shadow-sm">
+      <img src="{{ item[3] }}" class="card-img-top" alt="Item image">
+      <div class="card-body">
+        <h5 class="card-title">{{ item[1] }}</h5>
+        <p class="card-text">{{ item[2] }}</p>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ message }}</h2>
+<div class="card mt-3" style="width: 22rem;">
+  <img src="{{ match[3] }}" class="card-img-top" alt="Matched item">
+  <div class="card-body">
+    <h5 class="card-title">{{ match[1] }}</h5>
+    <p class="card-text">{{ match[2] }}</p>
+    <p class="text-muted"><small>Item ID: {{ match[0] }}</small></p>
+  </div>
+</div>
+{% endblock %}

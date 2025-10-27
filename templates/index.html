@@ -1,11 +1,9 @@
 {% extends "base.html" %}
-
 {% block content %}
-<div class="text-center">
-    <h1 class="mt-5">Welcome to the Lost & Found Portal</h1>
-    <p class="lead">Report lost items or search for found ones easily.</p>
-
-    <a href="{{ url_for('add_item') }}" class="btn btn-primary btn-lg m-2">Report an Item</a>
-    <a href="{{ url_for('list_items') }}" class="btn btn-success btn-lg m-2">View All Items</a>
+<div class="text-center mt-5">
+  <h1 class="mb-3">Welcome to Lost & Found</h1>
+  <p class="lead">Upload, search, and match lost or found items easily using image recognition.</p>
+  <a href="{{ url_for('lost') }}" class="btn btn-danger btn-lg m-2">I Lost Something</a>
+  <a href="{{ url_for('found') }}" class="btn btn-success btn-lg m-2">I Found Something</a>
 </div>
 {% endblock %}

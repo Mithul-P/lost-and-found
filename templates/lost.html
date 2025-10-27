@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Report a Lost Item</h2>
+<form method="POST" enctype="multipart/form-data">
+  <div class="mb-3">
+    <label class="form-label">Item Name</label>
+    <input type="text" class="form-control" name="name" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Description</label>
+    <textarea class="form-control" name="description" rows="3" required></textarea>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Upload Image</label>
+    <input type="file" class="form-control" name="image" accept="image/*" required>
+  </div>
+  <button class="btn btn-primary">Submit</button>
+</form>
+{% endblock %}
