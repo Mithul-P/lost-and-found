@@ -1,102 +1,103 @@
-from flask import Flask, render_template, request
+import os
+from flask import Flask, render_template, request, redirect
+from werkzeug.utils import secure_filename
 import mysql.connector
 from PIL import Image
 import imagehash
-import os
+from dotenv import load_dotenv
+
+# --------------------------
+# Load environment variables
+# --------------------------
+load_dotenv()
+
+DB_CONFIG = {
+    "host": os.getenv("DB_HOST"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "database": os.getenv("DB_NAME"),
+    "port": int(os.getenv("DB_PORT", 3306))
+}
 
 app = Flask(__name__)
-
-# ==========================
-# Database connection setup
-# ==========================
-def get_connection():
-    conn = mysql.connector.connect(
-        host="bhe5ouni2ddurdorxrum-mysql.services.clever-cloud.com",
-        user="urul80utrapmaxcl",
-        password="YyU7mp07VLzS81iMc3Vr",
-        database="bhe5ouni2ddurdorxrum"
-    )
-    return conn
-
 UPLOAD_FOLDER = 'static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+
+# --------------------------
+# DB Connection Helper
+# --------------------------
+def get_db_connection():
+    return mysql.connector.connect(**DB_CONFIG)
+
+
+# --------------------------
+# Routes
+# --------------------------
 @app.route('/')
-def index():
+def home():
     return render_template('index.html')
 
-# ==========================
-# LOST ITEM ROUTE
-# ==========================
+
 @app.route('/lost', methods=['GET', 'POST'])
 def lost():
     if request.method == 'POST':
         name = request.form['name']
         description = request.form['description']
-        file = request.files['image']
+        image = request.files['image']
 
-        if file:
-            image_path = os.path.join(UPLOAD_FOLDER, file.filename)
-            file.save(image_path)
+        if image:
+            filename = secure_filename(image.filename)
+            image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            image.save(image_path)
 
             # Compute image hash
-            img = Image.open(image_path)
-            image_hash = str(imagehash.average_hash(img))
-            image_url = f"/{image_path}"
+            hash_val = str(imagehash.average_hash(Image.open(image_path)))
 
-            # Reconnect to DB safely
-            conn = get_connection()
+            # Save to DB
+            conn = get_db_connection()
             cursor = conn.cursor()
-
             cursor.execute(
                 "INSERT INTO items (name, description, image_url, image_hash) VALUES (%s, %s, %s, %s)",
-                (name, description, image_url, image_hash)
+                (name, description, image_path, hash_val)
             )
             conn.commit()
             cursor.close()
             conn.close()
 
-            return render_template('message.html', msg="Lost item added successfully!")
+            return redirect('/')
+
     return render_template('lost.html')
 
-# ==========================
-# FOUND ITEM ROUTE
-# ==========================
+
 @app.route('/found', methods=['GET', 'POST'])
 def found():
     if request.method == 'POST':
         name = request.form['name']
         description = request.form['description']
-        file = request.files['image']
+        image = request.files['image']
 
-        if file:
-            image_path = os.path.join(UPLOAD_FOLDER, file.filename)
-            file.save(image_path)
+        if image:
+            filename = secure_filename(image.filename)
+            image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            image.save(image_path)
 
-            img = Image.open(image_path)
-            image_hash = str(imagehash.average_hash(img))
-            image_url = f"/{image_path}"
+            # Compute hash of uploaded image
+            hash_val = str(imagehash.average_hash(Image.open(image_path)))
 
-            conn = get_connection()
-            cursor = conn.cursor()
-
-            # Try to match with lost items
-            cursor.execute("SELECT name, description, image_url FROM items WHERE image_hash = %s", (image_hash,))
+            conn = get_db_connection()
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM items WHERE image_hash = %s", (hash_val,))
             match = cursor.fetchone()
-
-            if match:
-                msg = f"Possible match found! Lost item: {match[0]} - {match[1]}"
-            else:
-                msg = "No match found. Item added to found list."
-                cursor.execute(
-                    "INSERT INTO items (name, description, image_url, image_hash) VALUES (%s, %s, %s, %s)",
-                    (name, description, image_url, image_hash)
-                )
-                conn.commit()
-
             cursor.close()
             conn.close()
-            return render_template('message.html', msg=msg)
+
+            if match:
+                return f"<h2>Possible Match Found!</h2><p>Item Name: {match['name']}</p><p>Description: {match['description']}</p><img src='/{match['image_url']}' width='200'>"
+            else:
+                return "<h2>No match found yet. Please try again later.</h2>"
+
     return render_template('found.html')
 
 
